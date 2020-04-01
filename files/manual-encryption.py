@@ -10,56 +10,49 @@
 
 from scapy.all import *
 import binascii
-import rc4
+from rc4 import RC4
 
-#Cle wep AA:AA:AA:AA:AA
+# Cle wep AA:AA:AA:AA:AA
 key=b'\xaa\xaa\xaa\xaa\xaa'
 
-def rc4(s, val):
-    l = len(val)
-    buf = bytearray(l)
-    i = 0
-    j = 0
-    idx = 0
-    while idx < l:
-        i = (i + 1) & 0xff
-        j = (j + s[i]) & 0xff
-        s[i], s[j] = s[j], s[i]
-        k = s[(s[i] + s[j]) & 0xff]
-        buf[idx] = (ord(val[idx])) ^ k
-        idx = idx + 1
-    return str(buf)
-
-# Lecture de message chiffré - rdpcap retourne toujours un array, même si la capture contient
-arp = rdpcap('arp.cap')[0]
-
 # message à chiffrer
-plaintext = "Welcome to lab WEP of SWI"
+plaintext = b"Welcome to lab WEP of SWI"
+
+# Récupération du fichier .cap fourni - rdpcap retourne toujours un array, même si la capture contient un seul paquet
+arp = rdpcap('arp.cap')[0]
 
 # rc4 seed est composé de IV+clé
 seed = arp.iv + key
 
-# Calcul de l'ICV du plaintext
-icv = binascii.crc32(plaintext.encode()) & 0xffffffff
-
-# Conversion de l'icv en format int 
+# Calcul du nouvel ICV en effectuant un CRC du message
+# l'instruction & 0xffffffff permet de toujours retourner un icv positif
+icv = binascii.crc32(plaintext) & 0xffffffff
+# Conversion de l'ICV au format int
 icv = struct.pack('I', icv)
 
-
 # Concaténation du message et de l'ICV
-plaintext1 = plaintext + str(icv)
+plaintext_icv = plaintext + icv
 
 # Calcul du frame body en faisant keystream xor message_clear
-cipher= rc4(seed, plaintext1)
+cipher = RC4(seed, streaming=False)
+cryptedText = cipher.crypt(plaintext_icv)  
 
-#Remplacement des champs wepdata par le message crypté et de l'icv
-arp.wepdata = cipher[:-4]
-(arp.icv,) = struct.unpack("!L", cipher[-4:])
+# Récupération de l'ICV crypté
+icv_crypted=cryptedText[-4:]
+(icv_numerique,)=struct.unpack('!L', icv_crypted)
 
+# Récupération du message crypté
+text_crypted=cryptedText[:-4] 
+
+# Remplacement du wepData par le message crypté
+arp.wepdata = text_crypted
+
+# Remplacement de l'icv par l'icv crypté
+arp.icv = icv_numerique
 
 # Affichage de quelques information
-print ('Text: ' + arp.wepdata.encode("hex"))
-print ('icv:  ' + icv.encode("hex"))
+print('Text: ' + str(arp.wepdata))
+print('icv:  ' + str(icv_crypted))
 
-#Ecriture de la nouvelle trame dans le fichier arp1.cap
-wrpcap('arp1.cap', arp)
+# Ecriture de la nouvelle trame dans le fichier arp1.cap
+wrpcap("arp1.cap", arp)
