@@ -30,7 +30,7 @@ seed = arp.iv+key
 icv = binascii.crc32(plaintext) & 0xffffffff
 
 #Conversion de l'icv en format int 
-icv = struct.pack("<i", icv)
+icv = struct.pack('I', icv)
 
 #Concaténation du message et de l'ICV
 plaintext = plaintext + icv
