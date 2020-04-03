@@ -12,26 +12,25 @@ import binascii
 from rc4 import RC4
 
 
-#Cle wep AA:AA:AA:AA:AA
+# Cle wep AA:AA:AA:AA:AA
 key=b'\xaa\xaa\xaa\xaa\xaa'
 
-#Lecture de message chiffré - rdpcap retourne toujours un array, même si la capture contient
-arp0 = rdpcap('arp.cap')[0]
-arp1 = rdpcap('arp.cap')[0]
-arp2 = rdpcap('arp.cap')[0]
-
-#message à crypter 
+# Message à crypter 
 plaintext0 = b"Welcome to lab WEP of SWI. "
 plaintext1 = b"Task 3 manual encryption fragmentation. "
 plaintext2 = b"This is the last fragment"
 
+# Lecture de message chiffré - rdpcap retourne toujours un array, même si la capture contient
+arp0 = rdpcap('arp.cap')[0]
+arp1 = rdpcap('arp.cap')[0]
+arp2 = rdpcap('arp.cap')[0]
 
-#rc4 seed est composé de IV+clé
+# Rc4 seed est composé de IV+clé
 seed0 = arp0.iv + key
 seed1 = arp1.iv+key
 seed2 = arp2.iv+key
 
-#Calcul de l'ICV du plaintext
+# Calcul de l'ICV du plaintext
 icv0 = binascii.crc32(plaintext0) & 0xffffffff
 icv1 = binascii.crc32(plaintext1) & 0xffffffff
 icv2 = binascii.crc32(plaintext2) & 0xffffffff
@@ -57,14 +56,14 @@ cipher2 = RC4(seed2, streaming=False)
 cryptedText2 = cipher2.crypt(plaintext_icv2) 
 
 # Récupération de l'ICV crypté 
-icv_crypted0=cryptedText0[-4:]
-(icv_numerique0,)=struct.unpack('!L', icv_crypted0)
+icv0_crypted=cryptedText0[-4:]
+(icv0_numerique,)=struct.unpack('!L', icv0_crypted)
 
-icv_crypted1=cryptedText1[-4:]
-(icv_numerique1,)=struct.unpack('!L', icv_crypted1)
+icv1_crypted=cryptedText1[-4:]
+(icv1_numerique,)=struct.unpack('!L', icv1_crypted)
 
-icv_crypted2=cryptedText2[-4:]
-(icv_numerique2,)=struct.unpack('!L', icv_crypted2)
+icv2_crypted=cryptedText2[-4:]
+(icv2_numerique,)=struct.unpack('!L', icv2_crypted)
 
 # Récupération du message crypté
 text_crypted0 = cryptedText0[:-4] 
@@ -73,13 +72,13 @@ text_crypted2 = cryptedText2[:-4]
 
 #Remplacement des champs wepdata par le message crypté et de l'icv
 arp0.wepdata = text_crypted0
-arp0.icv  = icv_numerique0
+arp0.icv  = icv0_numerique
 
 arp1.wepdata = text_crypted1
-arp1.icv = icv_numerique1
+arp1.icv = icv1_numerique
 
 arp2.wepdata = text_crypted2
-arp2.icv  = icv_numerique2
+arp2.icv  = icv2_numerique
 
 #Activation du bit More fragment de la première trame
 arp0.FCfield.MF = True
@@ -96,14 +95,22 @@ arp2.FCfield.MF = False
 #Incrémentation du compteur de fragment
 arp2.SC += 2
 
+print('Text1: ' + str(arp0.wepdata.hex()))
+print('icv1:  ' + str(icv0_crypted.hex()))
+
+print('Text2: ' + str(arp1.wepdata.hex()))
+print('icv2:  ' + str(icv1_crypted.hex()))
+
+print('Text1: ' + str(arp1.wepdata.hex()))
+print('icv2:  ' + str(icv2_crypted.hex()))
+
 # Concaténation des trames
 arp = []
 arp.append(arp0)
 arp.append(arp1)
 arp.append(arp2)
 
-print('Text: ' + str(arp0.wepdata.hex()))
-print('icv:  ' + str(icv_crypted.hex()))
+print('AllText: ' + str(arp.wepdata.hex()))
 
 #Ecriture de la nouvelle trame dans le fichier arp1.cap
 wrpcap('arp2.cap', arp)
