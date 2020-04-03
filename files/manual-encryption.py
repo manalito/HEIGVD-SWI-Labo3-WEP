@@ -26,9 +26,9 @@ seed = arp.iv + key
 
 # Calcul du nouvel ICV en effectuant un CRC du message
 # l'instruction & 0xffffffff permet de toujours retourner un icv positif
-icv = binascii.crc32(plaintext) & 0xffffffff
+icv_crc = binascii.crc32(plaintext) & 0xffffffff
 # Conversion de l'ICV au format int
-icv = struct.pack('I', icv)
+icv = struct.pack('I', icv_crc)
 
 # Concaténation du message et de l'ICV
 plaintext_icv = plaintext + icv
@@ -51,8 +51,12 @@ arp.wepdata = text_crypted
 arp.icv = icv_numerique
 
 # Affichage de quelques information
-print('Text: ' + str(arp.wepdata.hex()))
-print('icv:  ' + str(icv_crypted.hex()))
+print('Texte en clair : ' + str(plaintext.hex()))
+print('Texte          : ' + str(arp.wepdata.hex()))
+print('icv (chiffré)  : ' + str(icv_crypted.hex()))
 
-# Ecriture de la nouvelle trame dans le fichier arp1.cap
-wrpcap("arp1.cap", arp)
+# permet de reformer correctement le paquet
+# -> scapy recalcule la bonne taille
+arp[RadioTap].len = None 
+# Ecriture de la nouvelle trame dans le fichier arp2.cap
+wrpcap("arp2.cap", arp)

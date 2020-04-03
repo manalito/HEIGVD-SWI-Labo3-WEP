@@ -95,14 +95,24 @@ arp2.FCfield.MF = False
 #Incrémentation du compteur de fragment
 arp2.SC += 2
 
-print('Text1: ' + str(arp0.wepdata.hex()))
-print('icv1:  ' + str(icv0_crypted.hex()))
+# Affichage de quelques information
+print('Texte 1 en clair : ' + str(plaintext0.hex()))
+print('Texte 1          : ' + str(arp0.wepdata.hex()))
+print('icv 1 (chiffré)  : ' + str(icv0_crypted.hex()))
 
-print('Text2: ' + str(arp1.wepdata.hex()))
-print('icv2:  ' + str(icv1_crypted.hex()))
+print('Texte 2 en clair : ' + str(plaintext1.hex()))
+print('Texte 2          : ' + str(arp1.wepdata.hex()))
+print('icv 2 (chiffré)  : ' + str(icv1_crypted.hex()))
 
-print('Text1: ' + str(arp1.wepdata.hex()))
-print('icv2:  ' + str(icv2_crypted.hex()))
+print('Texte 3 en clair : ' + str(plaintext2.hex()))
+print('Texte 3          : ' + str(arp2.wepdata.hex()))
+print('icv 3 (chiffré)  : ' + str(icv2_crypted.hex()))
+
+# permet de reformer correctement les paquets
+# -> scapy recalcule la bonne taille
+arp0[RadioTap].len = None
+arp1[RadioTap].len = None 
+arp2[RadioTap].len = None
 
 # Concaténation des trames
 arp = []
@@ -110,7 +120,5 @@ arp.append(arp0)
 arp.append(arp1)
 arp.append(arp2)
 
-print('AllText: ' + str(arp.wepdata.hex()))
-
-#Ecriture de la nouvelle trame dans le fichier arp1.cap
-wrpcap('arp2.cap', arp)
+# Ecriture de la nouvelle trame dans le fichier arp3.cap
+wrpcap("arp3.cap", arp)
