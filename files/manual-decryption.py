@@ -12,7 +12,7 @@ __status__ 		= "Prototype"
 
 from scapy.all import *
 import binascii
-import rc4
+from rc4 import RC4
 #Cle wep AA:AA:AA:AA:AA
 key= b'\xaa\xaa\xaa\xaa\xaa'
 
