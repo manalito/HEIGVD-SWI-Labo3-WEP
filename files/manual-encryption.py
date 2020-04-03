@@ -51,8 +51,8 @@ arp.wepdata = text_crypted
 arp.icv = icv_numerique
 
 # Affichage de quelques information
-print('Text: ' + str(arp.wepdata))
-print('icv:  ' + str(icv_crypted))
+print('Text: ' + str(arp.wepdata.hex()))
+print('icv:  ' + str(icv_crypted.hex()))
 
 # Ecriture de la nouvelle trame dans le fichier arp1.cap
 wrpcap("arp1.cap", arp)

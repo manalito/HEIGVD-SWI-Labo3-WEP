@@ -9,11 +9,11 @@
 
 from scapy.all import *
 import binascii
-import rc4 import RC4
+from rc4 import RC4
 
 
 #Cle wep AA:AA:AA:AA:AA
-key='\xaa\xaa\xaa\xaa\xaa'
+key=b'\xaa\xaa\xaa\xaa\xaa'
 
 #Lecture de message chiffré - rdpcap retourne toujours un array, même si la capture contient
 arp0 = rdpcap('arp.cap')[0]
@@ -21,13 +21,13 @@ arp1 = rdpcap('arp.cap')[0]
 arp2 = rdpcap('arp.cap')[0]
 
 #message à crypter 
-plaintext0 = "Welcome to lab WEP of SWI. "
-plaintext1 = "Task 3 manual encryption fragmentation. "
-plaintext2 = "This is the last fragment"
+plaintext0 = b"Welcome to lab WEP of SWI. "
+plaintext1 = b"Task 3 manual encryption fragmentation. "
+plaintext2 = b"This is the last fragment"
 
 
 #rc4 seed est composé de IV+clé
-seed0 = arp0.iv+key
+seed0 = arp0.iv + key
 seed1 = arp1.iv+key
 seed2 = arp2.iv+key
 
@@ -72,14 +72,14 @@ text_crypted1 = cryptedText1[:-4]
 text_crypted2 = cryptedText2[:-4] 
 
 #Remplacement des champs wepdata par le message crypté et de l'icv
-arp0.wepdata = cipher0[:-4]
-(arp0.icv,)  = icv_numerique0
+arp0.wepdata = text_crypted0
+arp0.icv  = icv_numerique0
 
-arp1.wepdata = cipher1[:-4]
-(arp1.icv,)  = icv_numerique1
+arp1.wepdata = text_crypted1
+arp1.icv = icv_numerique1
 
-arp2.wepdata = cipher2[:-4]
-(arp2.icv,)  = icv_numerique2
+arp2.wepdata = text_crypted2
+arp2.icv  = icv_numerique2
 
 #Activation du bit More fragment de la première trame
 arp0.FCfield.MF = True
@@ -101,6 +101,9 @@ arp = []
 arp.append(arp0)
 arp.append(arp1)
 arp.append(arp2)
+
+print('Text: ' + str(arp0.wepdata.hex()))
+print('icv:  ' + str(icv_crypted.hex()))
 
 #Ecriture de la nouvelle trame dans le fichier arp1.cap
 wrpcap('arp2.cap', arp)
